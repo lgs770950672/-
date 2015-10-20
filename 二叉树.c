@@ -1,1 +1,355 @@
-# data-structure
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct treeNode {
+	int key;
+	struct treeNode *left;
+	struct treeNode *right;
+	struct treeNode *parent;
+}Node, *Tree;
+
+// 前序遍历"二叉树"
+void preorder_tree(Tree tree);
+// 中序遍历"二叉树"
+void inorder_tree(Tree tree);
+// 后序遍历"二叉树"
+void postorder_tree(Tree tree);
+
+// (递归实现)查找"二叉树x"中键值为key的节点
+Node* tree_search(Tree x, int key);
+
+// 查找最小结点：返回tree为根结点的二叉树的最小结点。
+Node* tree_minimum(Tree tree);
+// 查找最大结点：返回tree为根结点的二叉树的最大结点。
+Node* tree_maximum(Tree tree);
+
+// 找结点(x)的后继结点。即，查找"二叉树中数据值大于该结点"的"最小结点"。
+Node* tree_successor(Node *x);
+// 找结点(x)的前驱结点。即，查找"二叉树中数据值小于该结点"的"最大结点"。
+Node* tree_predecessor(Node *x);
+
+// 将结点插入到二叉树中，并返回根节点
+Node* insert_tree(Tree tree, int key);
+
+// 删除结点(key为节点的值)，并返回根节点
+Node* delete_tree(Tree tree, int key);
+
+// 销毁二叉树
+void destroy_tree(Tree tree);
+
+// 打印二叉树
+void print_tree(Tree tree, int key, int direction);
+
+Node* create_tree_node(int key, Tree l, Tree r, Tree p) 
+{
+	Node *node = (Node *)malloc(sizeof(Node));
+	if (!node) return NULL;
+
+	node->key = key;
+	node->left = l;
+	node->right = r;
+	node->parent = p;
+	
+	return node;
+}
+
+Node* insert_tree(Tree tree, int key)
+{
+	Node *node;
+
+	if ((node = create_tree_node(key, NULL, NULL, NULL)) == NULL)
+	{
+		return tree;
+	}
+
+	if (tree == NULL)
+	{
+		tree = node;
+		return tree;
+	} 
+		
+	Node *root, *x;
+	
+	root = tree;
+	while(root != NULL) {
+		x = root;
+		if (key > root->key)
+		{
+			root = root->right;
+		} else if (key < root->key) {
+			root = root->left;
+		}	
+	}
+
+	node->parent = x;
+
+	if (x != NULL)
+	{ 
+		if (node->key < x->key)
+		{
+			x->left = node;
+		} else if(node->key > x->key) {
+			x->right = node;
+		}
+		
+	} else {
+		tree = node;
+	}
+	return tree;
+}
+
+void print_tree(Tree tree, int key, int direction)
+{
+	if (tree == NULL)
+		return;
+
+	if (direction == 0) 
+	{
+		printf(" %d is root node\n", tree->key);
+	} else {
+		printf(" %d is %s node\n", tree->key, direction > 0 ? "left" : "right");
+	}
+	print_tree(tree->left, tree->key, 1);
+	print_tree(tree->right, tree->key, -1);
+}
+
+
+void destroy_tree(Tree tree) 
+{
+	if (tree == NULL)
+		return;
+	if (tree->left != NULL)
+		destroy_tree(tree->left);
+	
+	if (tree->right != NULL)
+		destroy_tree(tree->right);
+
+	free(tree);
+}
+
+
+Node* tree_minimum(Tree tree)
+{
+	if (tree == NULL)
+		return NULL;
+
+	while (tree->left != NULL)
+		tree = tree->left;
+
+	return tree;
+}
+
+Node* tree_maximum(Tree tree)
+{
+	if (tree == NULL)
+		return NULL;
+
+	while (tree->right != NULL)
+		tree = tree->right;
+
+	return tree;
+}
+
+void preorder_tree(Tree tree)
+{
+	if (tree == NULL)
+		return;
+	printf("%d ", tree->key);	
+	preorder_tree(tree->left);
+	preorder_tree(tree->right);
+}
+
+void inorder_tree(Tree tree)
+{
+	if (tree == NULL)
+		return;
+	inorder_tree(tree->left);
+	printf("%d ", tree->key);
+	inorder_tree(tree->right);
+}
+
+void postorder_tree(Tree tree)
+{
+	if (tree == NULL)
+		return;
+	
+	postorder_tree(tree->left);
+	postorder_tree(tree->right);
+	printf("%d ", tree->key);
+}
+
+Node* tree_search(Tree tree, int key)
+{
+	if (tree == NULL)
+		return NULL;
+
+	while (tree != NULL) {
+		if (tree->key == key)
+			return tree;
+		if (tree->key < key)
+			tree = tree->right;
+		else
+			tree = tree->left;
+	}
+	return NULL;
+}
+
+// 找结点(x)的后继结点。即，查找"二叉树中数据值大于该结点"的"最小结点"。
+// 如果x有右子树，则找到右子树的最小结点
+// 如果x没有右子树：
+// (1). 如果x是父母的左子树，后继结果就是其父节点
+// (2). 如果x是父母的右子树，则一直上溯到第一个左祖先
+Node* tree_successor(Node *x)
+{
+	Node* y;
+	if (x == NULL)
+		return NULL;
+	if (x->right != NULL)
+		return tree_minimum(x->right);
+	
+	y = x->parent;
+
+	while (y != NULL && x == y->right) 
+	{
+		x = y;
+		y = y->parent;
+	}
+	return y;
+}
+
+// 找结点(x)的前驱结点。即，查找"二叉树中数据值小于该结点"的"最大结点"。
+// 如果x有左子树，则前驱为以左子树为的最大右结点
+// 如果x没有左子树
+// (1). x是一个右子树， 则x的前驱为它的父结点
+// (2). x是一个左子树， 则一直上溯到第一个右祖先
+Node* tree_predecessor(Node *x)
+{
+	Node* y;
+	if (x == NULL)
+		return NULL;
+	if (x->left != NULL)
+		return tree_maximum(x->left);
+
+	y = x->parent;
+
+	while (y != NULL && x == y->left) 
+	{
+		x = y;
+		y = y->parent;
+	}
+	return y;
+}
+
+// 删除结点(key为节点的值)，并返回根节点
+Node* delete_tree(Tree tree, int key)
+{
+	if (tree == NULL)
+		return NULL;
+	Node *x, *y, *z;
+	if ((z = tree_search(tree, key)) == NULL)
+		return NULL;
+
+	//如果key为叶子节点，直接删除，修改父节点的左子树或右子树为NULL;
+	//如果key节点存在一个左节点或右节点，删除该节点，并修改该节点的子节点的父节点和该节点的父节的左子树或右子树
+	//如果key节点存在两个节点，则用后继节点代码该节点
+
+	if ((z->left == NULL) || (z->right == NULL))
+		y = z;
+	else
+		y = tree_successor(z);
+
+	if (y->left == NULL)
+		x = y->right;
+	else
+		x = y->left;
+	
+	if (x != NULL)
+	{
+		x->parent = y->parent;
+	}
+
+	if (y->parent == NULL)
+	{
+		tree = x;
+	} else if (y->parent->left == y) {
+		y->parent->left = x;
+	} else {
+		y->parent->right = x;
+	}
+	 
+	if (y != z)
+		z->key = y->key;
+
+	if (y != NULL)
+		free(y);
+
+	return tree;
+}
+
+
+int main()
+{
+	
+	Tree root = NULL;
+	Tree min = NULL, max = NULL, val = NULL, successor = NULL;
+	//int arr[10] = {3, 2, 1, 8, 7, 5, 6, 4, 9, 0};
+	//int arr[6] = {3, 1, 2, 5, 4, 6};
+	//int arr[6] = {1, 5, 4, 3, 2, 6};
+	int arr[] = {10, 18, 3, 6, 12, 2, 4, 7, 15};
+	int len = sizeof(arr) / sizeof(arr[0]);
+
+	for (int i = 0; i < len; i++)
+	{
+		root = insert_tree(root, arr[i]);
+	}
+	print_tree(root, root->key, 0);
+
+	min = tree_minimum(root);
+	if (min != NULL)
+		printf("min value = %d\n", min->key);
+
+	max = tree_maximum(root);
+	if (max != NULL)
+		printf("max value = %d\n", max->key);
+
+	printf("前序:");
+	preorder_tree(root);
+	printf("\n");
+	
+	printf("中序:");
+	inorder_tree(root);
+	printf("\n");
+	
+	printf("后序:");
+	postorder_tree(root);
+	printf("\n");
+	
+	val = tree_search(root, 3);
+
+	successor = tree_successor(val);
+	printf("3 的后继节点是：%d\n", successor->key);
+	successor = tree_predecessor(val);
+	printf("3 的前驱节点是：%d\n", successor->key);
+	printf("\n");
+	
+	delete_tree(root, 7);
+	printf("删除 节点7 之后前序为：");
+	preorder_tree(root);
+	printf("\n");
+	
+	delete_tree(root, 12);
+	printf("删除 节点12 之后前序为：");
+	preorder_tree(root);
+	printf("\n");
+
+	delete_tree(root, 3);
+	printf("删除 节点3 之后前序为：");
+	preorder_tree(root);
+	printf("\n");
+	destroy_tree(root);
+
+
+	system("pause");
+	return 0;
+}	
